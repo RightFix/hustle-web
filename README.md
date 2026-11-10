@@ -1,32 +1,85 @@
-# React + TypeScript + Vite
+# Hustle — Web Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React + TypeScript + Vite. This is the **source of truth** for the product UI;
+the Android app is a Capacitor wrapper around it.
 
-Currently, two official plugins are available:
+## Development
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+npm install
+npm run dev        # Vite dev server on :5173, proxies /api, /media, /docs to :8000
+```
 
-## React Compiler
+The backend must be running locally on `:8000` (`cd backend && cargo run`).
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Checks
 
-## Expanding the Oxlint configuration
+```bash
+npx tsc --noEmit   # type-check
+npm run lint       # oxlint
+npm run build      # tsc -b && vite build -> dist/
+```
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+## Capacitor (Android wrapper)
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
+The native app loads the **deployed** web app from a single origin
+(`server.url` in `capacitor.config.ts`), so the backend's HttpOnly auth cookie
+works unchanged inside the WebView. In that mode the bundled `dist/` is not
+served, but keep `webDir: dist` — `cap sync` still requires a built `dist/`.
+
+One-time setup (already done in this repo):
+
+```bash
+npm install @capacitor/core @capacitor/cli @capacitor/android
+npx cap init Hustle com.hustle.app --web-dir dist
+npx cap add android
+```
+
+### Pointing the app at a server
+
+Edit `server.url` in `capacitor.config.ts`:
+
+```ts
+server: {
+  url: 'https://your-hustle-host',   // web app + API origin
+  cleartext: true,                   // plain-http LAN testing only
 }
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+- **Production**: the deployed site (HTTPS). The cookie rides that origin.
+- **LAN testing**: your dev machine, e.g. `http://192.168.1.20:8000` (same
+  Wi-Fi as the phone; `cleartext: true` is required for plain HTTP). The app
+  then talks straight to the backend — no separate web deploy needed.
+  The manifest carries `android:usesCleartextTraffic="true"` for this; drop it
+  when you ship a HTTPS-only production build.
+
+### Building an APK
+
+Requires the Android SDK (installed to `~/android-sdk`, wired up in
+`local.properties`) and **JDK 21** — Capacitor's Android code targets
+Java 21, so JDK 17 fails with `invalid source release: 21`, and
+Gradle 8.14 doesn't support newer JDKs like 25:
+
+```bash
+sudo apt install -y openjdk-21-jdk
+export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64   # add to ~/.bashrc
+```
+
+Then:
+
+```bash
+npm run build      # refresh dist/ (required by cap sync)
+npx cap sync       # copy web assets + plugins into android/
+cd android
+./gradlew assembleDebug          # APK -> android/app/build/outputs/apk/debug/
+./gradlew assembleRelease        # needs a signing config for the Play Store
+```
+
+Install a debug build on a connected device with
+`adb install app/build/outputs/apk/debug/app-debug.apk`.
+
+### Refreshing after UI changes
+
+```bash
+npm run build && npx cap sync && cd android && ./gradlew assembleDebug
+```

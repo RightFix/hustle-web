@@ -1,10 +1,12 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 export default function Register() {
   const { register } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const accountType = searchParams.get('type') === 'hirer' ? 'hirer' : 'worker'
   const [email, setEmail] = useState('')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -17,7 +19,7 @@ export default function Register() {
     setBusy(true)
     try {
       await register(email, username, password)
-      navigate('/')
+      navigate('/verify-email?sent=1', { replace: true })
     } catch (err) {
       setError((err as Error).message)
     } finally {
@@ -27,7 +29,10 @@ export default function Register() {
 
   return (
     <div className="max-w-sm mx-auto mt-20 px-4">
-      <h1 className="text-3xl font-bold text-center text-indigo-400 mb-6">Join Hustle</h1>
+      <h1 className="text-3xl font-bold text-center text-indigo-400 mb-2">Join Hustle</h1>
+      <p className="text-center text-slate-400 text-sm mb-6">
+        {accountType === 'hirer' ? 'Hire trusted hustlers near you.' : 'Show your skills. Get hired.'}
+      </p>
       <form onSubmit={submit} className="flex flex-col gap-3">
         <input
           type="email"

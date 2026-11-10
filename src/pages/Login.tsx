@@ -16,7 +16,7 @@ export default function Login() {
     setBusy(true)
     try {
       await login(email, password)
-      navigate('/')
+      navigate('/feed')
     } catch (err) {
       setError((err as Error).message)
     } finally {
@@ -53,6 +53,11 @@ export default function Login() {
         </button>
       </form>
       <p className="text-center text-slate-400 text-sm mt-4">
+        <Link to="/forgot-password" className="text-indigo-400 hover:underline">
+          Forgot password?
+        </Link>
+      </p>
+      <p className="text-center text-slate-400 text-sm mt-2">
         No account?{' '}
         <Link to="/register" className="text-indigo-400 hover:underline">
           Sign up

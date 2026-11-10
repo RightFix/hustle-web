@@ -4,30 +4,48 @@ import type { PostOut } from '../types'
 import PostCard from '../components/PostCard'
 import { useAuth } from '../context/AuthContext'
 
+const PER_PAGE = 20
+
 export default function Feed() {
   const { user } = useAuth()
   const [following, setFollowing] = useState(false)
   const [posts, setPosts] = useState<PostOut[]>([])
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
   const [content, setContent] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
 
-  const load = async () => {
+  const load = async (targetPage: number) => {
     try {
-      setPosts(await api.feed(following))
+      const data = await api.feed({ following, page: targetPage, per_page: PER_PAGE })
+      setTotal(data.total)
+      setPosts((prev) => (targetPage === 1 ? data.items : [...prev, ...data.items]))
     } catch (e) {
       setError((e as Error).message)
     } finally {
       setLoading(false)
+      setLoadingMore(false)
     }
   }
 
   useEffect(() => {
     setLoading(true)
-    load()
+    setPage(1)
+    load(1)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [following])
+
+  const hasMore = posts.length < total
+
+  const loadMore = () => {
+    const next = page + 1
+    setPage(next)
+    setLoadingMore(true)
+    load(next)
+  }
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,6 +55,7 @@ export default function Feed() {
     try {
       const created = await api.createPost(content.trim())
       setPosts((prev) => [created, ...prev])
+      setTotal((t) => t + 1)
       setContent('')
     } catch (e) {
       setError((e as Error).message)
@@ -98,7 +117,26 @@ export default function Feed() {
           {following ? 'No posts from people you follow yet.' : 'No posts yet.'}
         </p>
       ) : (
-        posts.map((p) => <PostCard key={p.id} post={p} />)
+        <>
+          {posts.map((p) => (
+            <PostCard key={p.id} post={p} />
+          ))}
+          {hasMore ? (
+            <div className="p-4 text-center">
+              <button
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold px-5 py-2 text-sm disabled:opacity-50"
+              >
+                {loadingMore ? 'Loading…' : `Load more (${total - posts.length} left)`}
+              </button>
+            </div>
+          ) : (
+            <p className="text-center text-slate-600 text-xs py-4">
+              You're all caught up.
+            </p>
+          )}
+        </>
       )}
     </div>
   )

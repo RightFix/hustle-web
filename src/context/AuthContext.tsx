@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import { api, clearToken, getToken, setToken } from '../api/client'
+import { api } from '../api/client'
 import type { UserOut } from '../types'
 
 interface AuthContextValue {
@@ -7,7 +7,7 @@ interface AuthContextValue {
   loading: boolean
   login: (email: string, password: string) => Promise<void>
   register: (email: string, username: string, password: string) => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
   refresh: () => Promise<void>
 }
 
@@ -18,21 +18,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const token = getToken()
-    if (!token) {
-      setLoading(false)
-      return
-    }
+    // No client-side token to check: the HttpOnly cookie goes with the
+    // request automatically. 401 here just means logged out.
     api
       .me()
       .then(setUser)
-      .catch(() => clearToken())
+      .catch(() => setUser(null))
       .finally(() => setLoading(false))
   }, [])
 
   const login = async (email: string, password: string) => {
-    const token = await api.login(email, password)
-    setToken(token.access_token)
+    await api.login(email, password)
     setUser(await api.me())
   }
 
@@ -41,9 +37,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await login(email, password)
   }
 
-  const logout = () => {
-    clearToken()
-    setUser(null)
+  const logout = async () => {
+    try {
+      await api.logout()
+    } finally {
+      setUser(null)
+    }
   }
 
   const refresh = async () => {
