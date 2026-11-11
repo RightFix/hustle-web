@@ -126,6 +126,8 @@ export default function Thread() {
       </p>
     )
 
+  const blocked = Boolean(conversation && (conversation.is_blocked_by_me || conversation.is_blocked_by_them))
+
   return (
     <div className="max-w-2xl mx-auto min-h-screen border-x border-slate-800 flex flex-col">
       <header className="px-4 py-3 border-b border-slate-800 flex items-center gap-3">
@@ -181,34 +183,42 @@ export default function Thread() {
         <div ref={bottomRef} />
       </div>
 
-      {peerTyping && conversation && (
+      {peerTyping && conversation && !blocked && (
         <p className="px-4 pb-1 text-xs text-slate-500 animate-pulse">
           @{conversation.other_user.username} is typing…
         </p>
       )}
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault()
-          send()
-        }}
-        className="border-t border-slate-800 p-3 flex gap-2"
-      >
-        <input
-          value={draft}
-          onChange={(e) => onDraftChange(e.target.value)}
-          maxLength={2000}
-          placeholder="Type a message…"
-          className="flex-1 rounded-full bg-slate-800 border border-slate-700 px-4 py-2 text-sm text-white outline-none focus:border-indigo-500"
-        />
-        <button
-          type="submit"
-          disabled={!draft.trim()}
-          className="rounded-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white text-sm font-semibold px-5"
+      {blocked ? (
+        <div className="border-t border-slate-800 p-3 text-sm text-slate-400">
+          {conversation?.is_blocked_by_me
+            ? 'You blocked this user. Unblock them from their profile to send messages.'
+            : 'You can’t message this user.'}
+        </div>
+      ) : (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            send()
+          }}
+          className="border-t border-slate-800 p-3 flex gap-2"
         >
-          Send
-        </button>
-      </form>
+          <input
+            value={draft}
+            onChange={(e) => onDraftChange(e.target.value)}
+            maxLength={2000}
+            placeholder="Type a message…"
+            className="flex-1 rounded-full bg-slate-800 border border-slate-700 px-4 py-2 text-sm text-white outline-none focus:border-indigo-500"
+          />
+          <button
+            type="submit"
+            disabled={!draft.trim()}
+            className="rounded-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white text-sm font-semibold px-5"
+          >
+            Send
+          </button>
+        </form>
+      )}
     </div>
   )
 }

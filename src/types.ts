@@ -107,6 +107,8 @@ export interface Conversation {
   last_message: { body: string; sender_id: number; created_at: string } | null
   unread_count: number
   updated_at: string
+  is_blocked_by_me: boolean
+  is_blocked_by_them: boolean
 }
 
 export interface Message {
