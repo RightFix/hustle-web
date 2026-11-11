@@ -111,6 +111,19 @@ export default function GigDetail() {
     }
   }
 
+  const reportGig = async () => {
+    const reason = prompt('Report this gig. Reason (spam, scam, inappropriate, other):')
+    if (!reason || !reason.trim()) return
+    const details = prompt('Additional details (optional):') || undefined
+    setError(''); setNotice('')
+    try {
+      await api.report({ target_type: 'gig', target_id: gigId, reason: reason.trim(), details })
+      setNotice('Report submitted. Our team will review it.')
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }
+
   if (loading) return <p className="text-center text-slate-500 py-10">Loading…</p>
   if (!gig)
     return (
@@ -132,6 +145,14 @@ export default function GigDetail() {
           >
             {gig.saved ? '🔖 Saved' : '🔖 Save'}
           </button>
+          {!isPoster && (
+            <button
+              onClick={reportGig}
+              className="text-sm text-slate-400 hover:text-amber-400"
+            >
+              Report
+            </button>
+          )}
           <span
             className={`text-xs font-semibold rounded-full border px-2 py-0.5 ${collarStyles[gig.collar]}`}
           >

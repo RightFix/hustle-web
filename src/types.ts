@@ -42,6 +42,8 @@ export interface FollowInfo {
   followers_count: number
   following_count: number
   is_following: boolean
+  is_blocked_by_me: boolean
+  is_blocked_by_them: boolean
 }
 
 export interface StatsOut {
@@ -156,4 +158,19 @@ export interface Applicant {
   avatar_url?: string | null
   message: string | null
   applied_at: string
+}
+
+
+export interface ReportOut {
+  id: number
+  reporter_id: number
+  target_type: 'user' | 'post' | 'gig'
+  target_id: number
+  reason: string
+  details?: string | null
+  status: string
+  admin_note?: string | null
+  resolved_by?: number | null
+  resolved_at?: string | null
+  created_at: string
 }

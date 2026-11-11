@@ -8,11 +8,13 @@ import type {
   NotificationPage,
   PaginatedGigs,
   PaginatedPosts,
+  ReportOut,
   PaginatedUsers,
   PostOut,
   Skill,
   StatsOut,
   Token,
+  UserBrief,
   UserOut,
 } from '../types'
 
@@ -255,4 +257,13 @@ export const api = {
   },
 
   deleteAvatar: () => request<UserOut>('/users/me/avatar', { method: 'DELETE' }),
+  blockUser: (id: number) => request<void>(`/users/${id}/block`, { method: 'POST' }),
+
+  unblockUser: (id: number) => request<void>(`/users/${id}/block`, { method: 'DELETE' }),
+
+  myBlocks: () => request<UserBrief[]>(`/users/me/blocks`),
+
+  report: (data: { target_type: 'user' | 'post' | 'gig'; target_id: number; reason: string; details?: string }) =>
+    request<ReportOut>('/reports', { method: 'POST', body: JSON.stringify(data) }),
+
 }

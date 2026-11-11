@@ -30,6 +30,18 @@ export default function PostCard({ post }: { post: PostOut }) {
     }
   }
 
+  const handleReport = async () => {
+    const reason = prompt('Report this post. Reason (spam, harassment, scam, inappropriate, other):')
+    if (!reason || !reason.trim()) return
+    const details = prompt('Additional details (optional):') || undefined
+    try {
+      await api.report({ target_type: 'post', target_id: post.id, reason: reason.trim(), details })
+      alert('Report submitted. Thank you.')
+    } catch (e) {
+      alert((e as Error).message)
+    }
+  }
+
   return (
     <article className="border-b border-slate-800 px-4 py-3 hover:bg-slate-900/40">
       <div className="flex items-center gap-2 text-sm">
@@ -40,14 +52,22 @@ export default function PostCard({ post }: { post: PostOut }) {
           @{post.author?.username ?? 'unknown'}
         </Link>
         <span className="text-slate-500">· {timeAgo(post.created_at)}</span>
-        {user?.id === post.author_id && (
+        <span className="ml-auto" />
+        {user?.id === post.author_id ? (
           <button
             onClick={handleDelete}
-            className="ml-auto text-slate-500 hover:text-red-400 text-xs"
+            className="text-slate-500 hover:text-red-400 text-xs"
           >
             Delete
           </button>
-        )}
+        ) : user ? (
+          <button
+            onClick={handleReport}
+            className="text-slate-500 hover:text-amber-400 text-xs"
+          >
+            Report
+          </button>
+        ) : null}
       </div>
       <p className="mt-1 whitespace-pre-wrap text-slate-200">{post.content}</p>
     </article>

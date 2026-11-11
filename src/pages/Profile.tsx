@@ -66,6 +66,34 @@ export default function Profile() {
     }
   }
 
+  const toggleBlock = async () => {
+    if (!info) return
+    const action = info.is_blocked_by_me ? 'unblock' : 'block'
+    if (action === 'block' && !confirm(`Block @${profile?.username}? They won't be able to follow, message, or apply to your gigs.`)) return
+    setError(''); setNotice('')
+    try {
+      if (info.is_blocked_by_me) await api.unblockUser(userId)
+      else await api.blockUser(userId)
+      setInfo(await api.followInfo(userId))
+      setNotice(info.is_blocked_by_me ? 'User unblocked.' : 'User blocked.')
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }
+
+  const reportUser = async () => {
+    const reason = prompt('Report this user. Reason (spam, harassment, scam, inappropriate, other):')
+    if (!reason || !reason.trim()) return
+    const details = prompt('Additional details (optional):') || undefined
+    setError(''); setNotice('')
+    try {
+      await api.report({ target_type: 'user', target_id: userId, reason: reason.trim(), details })
+      setNotice('Report submitted. Our team will review it.')
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }
+
   const saveBio = async () => {
     try {
       await api.updateProfile({ bio: bioDraft })
@@ -189,23 +217,49 @@ export default function Profile() {
               </button>
             </div>
           ) : (
-            <div className="flex gap-2">
-              <button
-                onClick={toggleFollow}
-                className={`rounded-full font-semibold px-4 py-1.5 text-sm ${
-                  info?.is_following
-                    ? 'bg-slate-700 hover:bg-slate-600 text-white'
-                    : 'bg-indigo-600 hover:bg-indigo-500 text-white'
-                }`}
-              >
-                {info?.is_following ? 'Unfollow' : 'Follow'}
-              </button>
-              <button
-                onClick={messageUser}
-                className="rounded-full border border-slate-600 hover:border-slate-400 text-slate-200 font-semibold px-4 py-1.5 text-sm"
-              >
-                Message
-              </button>
+            <div className="flex flex-col gap-2">
+              {info?.is_blocked_by_them && (
+                <p className="text-sm text-amber-400">You can’t interact with this user.</p>
+              )}
+              {info?.is_blocked_by_me && (
+                <p className="text-sm text-slate-400">You have blocked this user.</p>
+              )}
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={toggleFollow}
+                  disabled={info?.is_blocked_by_me || info?.is_blocked_by_them}
+                  className={`rounded-full font-semibold px-4 py-1.5 text-sm disabled:opacity-50 ${
+                    info?.is_following
+                      ? 'bg-slate-700 hover:bg-slate-600 text-white'
+                      : 'bg-indigo-600 hover:bg-indigo-500 text-white'
+                  }`}
+                >
+                  {info?.is_following ? 'Unfollow' : 'Follow'}
+                </button>
+                <button
+                  onClick={messageUser}
+                  disabled={info?.is_blocked_by_me || info?.is_blocked_by_them}
+                  className="rounded-full border border-slate-600 hover:border-slate-400 disabled:opacity-50 text-slate-200 font-semibold px-4 py-1.5 text-sm"
+                >
+                  Message
+                </button>
+                <button
+                  onClick={toggleBlock}
+                  className={`rounded-full font-semibold px-4 py-1.5 text-sm ${
+                    info?.is_blocked_by_me
+                      ? 'bg-slate-700 hover:bg-slate-600 text-white'
+                      : 'border border-red-500/40 text-red-400 hover:bg-red-500/10'
+                  }`}
+                >
+                  {info?.is_blocked_by_me ? 'Unblock' : 'Block'}
+                </button>
+                <button
+                  onClick={reportUser}
+                  className="rounded-full border border-slate-700 hover:border-slate-500 text-slate-400 hover:text-slate-200 font-semibold px-4 py-1.5 text-sm"
+                >
+                  Report
+                </button>
+              </div>
             </div>
           )}
         </div>
