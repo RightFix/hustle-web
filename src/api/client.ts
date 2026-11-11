@@ -13,9 +13,11 @@ import type {
   PostOut,
   Skill,
   StatsOut,
+  RatingOut,
   Token,
   UserBrief,
   UserOut,
+  UserRatingsOut,
 } from '../types'
 
 const API = '/api'
@@ -265,5 +267,22 @@ export const api = {
 
   report: (data: { target_type: 'user' | 'post' | 'gig'; target_id: number; reason: string; details?: string }) =>
     request<ReportOut>('/reports', { method: 'POST', body: JSON.stringify(data) }),
+
+  acceptApplicant: (gigId: number, workerId: number) =>
+    request<Gig>(`/gigs/${gigId}/applicants/${workerId}/accept`, { method: 'POST' }),
+
+  rejectApplicant: (gigId: number, workerId: number) =>
+    request<Message>(`/gigs/${gigId}/applicants/${workerId}/reject`, { method: 'POST' }),
+
+  completeGig: (gigId: number) =>
+    request<Gig>(`/gigs/${gigId}/complete`, { method: 'POST' }),
+
+  rateGig: (gigId: number, rating: number, comment?: string) =>
+    request<RatingOut>(`/gigs/${gigId}/rating`, {
+      method: 'POST',
+      body: JSON.stringify({ rating, comment: comment ?? null }),
+    }),
+
+  userRatings: (userId: number) => request<UserRatingsOut>(`/users/${userId}/ratings`),
 
 }

@@ -6,13 +6,22 @@ import type { NotificationItem } from '../types'
 
 function describe(n: NotificationItem): { text: string; to: string } {
   const who = `@${n.actor.username}`
+  const gigTo = n.ref_id ? `/gigs/${n.ref_id}` : '/gigs'
   switch (n.kind) {
     case 'follow':
       return { text: `${who} followed you`, to: `/u/${n.actor.id}` }
     case 'gig_apply':
-      return { text: `${who} applied to your gig`, to: `/gigs/${n.ref_id}` }
+      return { text: `${who} applied to your gig`, to: gigTo }
+    case 'gig_accept':
+      return { text: `${who} hired you for a gig`, to: gigTo }
+    case 'gig_reject':
+      return { text: `Your application was not selected`, to: gigTo }
+    case 'gig_complete':
+      return { text: `Gig completion update from ${who}`, to: gigTo }
+    case 'gig_rating':
+      return { text: `${who} left you a rating`, to: gigTo }
     case 'message':
-      return { text: `${who} sent you a message`, to: `/messages/${n.ref_id}` }
+      return { text: `${who} sent you a message`, to: n.ref_id ? `/messages/${n.ref_id}` : '/messages' }
     default:
       return { text: `${who} triggered an event`, to: '/' }
   }
@@ -123,7 +132,7 @@ export default function NotificationsBell() {
           </div>
           {items.length === 0 ? (
             <p className="text-sm text-slate-500 px-3 py-4 text-center">
-              Nothing yet. Follows, gig applications, and messages show up here.
+              Nothing yet. Follows, gig updates, ratings, and messages show up here.
             </p>
           ) : (
             <ul className="max-h-96 overflow-y-auto">

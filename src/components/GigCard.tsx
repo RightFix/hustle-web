@@ -67,8 +67,20 @@ export default function GigCard({ gig, onSavedChange }: GigCardProps) {
         {gig.status === 'closed' && (
           <span className="text-red-400 font-semibold">Closed</span>
         )}
-        {gig.applied && (
+        {gig.status === 'in_progress' && (
+          <span className="text-amber-300 font-semibold">In progress</span>
+        )}
+        {gig.status === 'completed' && (
+          <span className="text-indigo-300 font-semibold">Completed</span>
+        )}
+        {gig.my_application_status === 'pending' && (
           <span className="text-emerald-400 font-semibold">Applied ✓</span>
+        )}
+        {gig.my_application_status === 'accepted' && (
+          <span className="text-emerald-300 font-semibold">Hired ✓</span>
+        )}
+        {gig.my_application_status === 'rejected' && (
+          <span className="text-slate-400 font-semibold">Not selected</span>
         )}
       </div>
     </Link>

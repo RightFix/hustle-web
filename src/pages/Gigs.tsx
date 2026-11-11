@@ -150,7 +150,7 @@ export default function Gigs() {
         </div>
 
         <div className="flex gap-4 text-xs font-semibold">
-          {['open', 'closed', 'all'].map((s) => (
+          {['open', 'in_progress', 'completed', 'closed', 'all'].map((s) => (
             <button
               key={s}
               onClick={() => {

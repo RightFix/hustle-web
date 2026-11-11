@@ -68,9 +68,11 @@ export interface Gig {
   collar: Collar
   location: string | null
   pay: string | null
-  status: 'open' | 'closed'
+  status: 'open' | 'in_progress' | 'completed' | 'closed'
   created_at: string
+  hired_worker_id?: number | null
   applied?: boolean
+  my_application_status?: 'pending' | 'accepted' | 'rejected' | null
   saved?: boolean
   applicant_count: number
 }
@@ -123,7 +125,7 @@ export interface Message {
 
 export interface NotificationItem {
   id: number
-  kind: 'follow' | 'gig_apply' | 'message'
+  kind: 'follow' | 'gig_apply' | 'gig_accept' | 'gig_reject' | 'gig_complete' | 'gig_rating' | 'message'
   actor: UserBrief
   ref_type: string | null
   ref_id: number | null
@@ -160,6 +162,7 @@ export interface Applicant {
   avatar_url?: string | null
   message: string | null
   applied_at: string
+  status: 'pending' | 'accepted' | 'rejected'
 }
 
 
@@ -175,4 +178,27 @@ export interface ReportOut {
   resolved_by?: number | null
   resolved_at?: string | null
   created_at: string
+}
+
+
+export interface RatingOut {
+  id: number
+  gig_id: number
+  rater_id: number
+  rater_username: string
+  rater_avatar_url?: string | null
+  ratee_id: number
+  rating: number
+  comment: string | null
+  created_at: string
+}
+
+export interface RatingSummary {
+  average: number | null
+  count: number
+}
+
+export interface UserRatingsOut {
+  summary: RatingSummary
+  items: RatingOut[]
 }

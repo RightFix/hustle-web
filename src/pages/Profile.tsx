@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
-import type { FollowInfo, PostOut, Skill, UserOut } from '../types'
+import type { FollowInfo, PostOut, Skill, UserOut, UserRatingsOut } from '../types'
 import PostCard from '../components/PostCard'
 import GallerySection from '../components/GallerySection'
 import Avatar from '../components/Avatar'
@@ -17,6 +17,7 @@ export default function Profile() {
   const [info, setInfo] = useState<FollowInfo | null>(null)
   const [posts, setPosts] = useState<PostOut[]>([])
   const [skills, setSkills] = useState<Skill[]>([])
+  const [ratings, setRatings] = useState<UserRatingsOut | null>(null)
   const [bioDraft, setBioDraft] = useState('')
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
@@ -31,16 +32,18 @@ export default function Profile() {
 
   const load = async () => {
     try {
-      const [p, i, ps, sk] = await Promise.all([
+      const [p, i, ps, sk, rt] = await Promise.all([
         api.getUser(userId),
         api.followInfo(userId),
         api.userPosts(userId),
         api.userSkills(userId),
+        api.userRatings(userId).catch(() => null),
       ])
       setProfile(p)
       setInfo(i)
       setPosts(ps)
       setSkills(sk)
+      setRatings(rt)
       setBioDraft(p.bio ?? '')
     } catch (e) {
       setError((e as Error).message)
@@ -346,6 +349,37 @@ export default function Profile() {
               </span>
             ))}
           </div>
+        )}
+      </section>
+
+      {/* Ratings */}
+      <section className="p-4 border-b border-slate-800">
+        <div className="flex items-center justify-between">
+          <h2 className="font-semibold text-white">Ratings</h2>
+          {ratings && ratings.summary.count > 0 ? (
+            <span className="text-sm text-amber-300 font-semibold">
+              ★ {ratings.summary.average?.toFixed(1)} <span className="text-slate-400 font-normal">({ratings.summary.count})</span>
+            </span>
+          ) : (
+            <span className="text-sm text-slate-500">No ratings yet</span>
+          )}
+        </div>
+        {ratings && ratings.items.length > 0 && (
+          <ul className="mt-3 space-y-3">
+            {ratings.items.slice(0, 5).map((r) => (
+              <li key={r.id} className="rounded-xl bg-slate-900 border border-slate-800 p-3">
+                <div className="flex items-center justify-between">
+                  <Link to={`/u/${r.rater_id}`} className="flex items-center gap-2 text-sm font-semibold text-white hover:text-indigo-300">
+                    <Avatar username={r.rater_username} avatar_url={r.rater_avatar_url} size={24} />
+                    @{r.rater_username}
+                  </Link>
+                  <span className="text-amber-300 text-sm font-semibold">{'★'.repeat(r.rating)}<span className="text-slate-600">{'★'.repeat(5 - r.rating)}</span></span>
+                </div>
+                {r.comment && <p className="text-sm text-slate-300 mt-2">{r.comment}</p>}
+                <p className="text-xs text-slate-500 mt-1">{new Date(r.created_at).toLocaleDateString()} · <Link className="hover:underline" to={`/gigs/${r.gig_id}`}>Gig #{r.gig_id}</Link></p>
+              </li>
+            ))}
+          </ul>
         )}
       </section>
 
